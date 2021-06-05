@@ -18,6 +18,7 @@ DEBUG = os.environ.get('SCCJS_DEBUG', False)
 SEND_EMAIL = os.environ.get('SCCJS_SEND_EMAIL', False)
 
 class SCCJS:
+    DATE_FORMAT = '%Y-%m-%d'
     LOGIN_AUTH_TOKEN_NAME = '__RequestVerificationToken'
     LOGIN_GET_URL = 'https://cjs.shelbycountytn.gov/CJS/Account/Login'
     LOGIN_POST_URL = 'https://cjs.shelbycountytn.gov/CJS/'
@@ -30,10 +31,12 @@ class SCCJS:
     class LoginFailed(Exception):
         pass
 
-    def __init__(self, username, password) -> None:
+    def __init__(self, username, password, verify=False) -> None:
         self.username = username
         self.password = password
         self._session = None
+        if verify:
+            self._get_session()
 
     def get_data(self, start_date, end_date):
         hearings = []
@@ -47,7 +50,7 @@ class SCCJS:
 
         for date in dates:
             for judge_id in judge_ids:
-                logger.info(f'getting hearings for judge with id {judge_id} on {date.strftime("%Y-%m-%d")}')
+                logger.info(f'getting hearings for judge with id {judge_id} on {date.strftime(self.DATE_FORMAT)}')
                 for hearing in self._get_hearings(judge_id, date):
                     encrypted_case_id = hearing['EncryptedCaseId']
                     extended_hearing_data = self._get_hearing(encrypted_case_id)
@@ -166,7 +169,6 @@ def send_email_with_attachment(email_from, email_to, start, end, csv_fp):
 
 
 if __name__ == '__main__':
-    DATE_FORMAT = '%Y-%m-%d'
     DATA_FILE = 'data.csv'
 
     email_from = os.environ['SCCJS_EMAIL_FROM']
@@ -177,8 +179,8 @@ if __name__ == '__main__':
     end_date_raw = sys.argv[4]
     email_to = os.environ.get('SCCJS_EMAIL_TO', username)
 
-    start_date = datetime.datetime.strptime(start_date_raw, DATE_FORMAT)
-    end_date = datetime.datetime.strptime(end_date_raw, DATE_FORMAT)
+    start_date = datetime.datetime.strptime(start_date_raw, SCCJS.DATE_FORMAT)
+    end_date = datetime.datetime.strptime(end_date_raw, SCCJS.DATE_FORMAT)
 
     data = SCCJS(username, password).get_data(start_date, end_date)
 

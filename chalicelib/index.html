@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang=en>
+<head>
+    <meta charset=utf-8>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <title>SCCJS</title>
+</head>
+<body>
+    <div class="container" style="max-width: 400px;">
+        <h1 class="text-center">Submit SCCJS Job</h1>
+        <form hx-post="submit" hx-target="#result" hx-ext="json-enc">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="email" class="form-control" id="username" placeholder="name@example.com" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="mb-3">
+                <label for="start_date" class="form-label">Start date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" required>
+            </div>
+            <div class="mb-3">
+                <label for="end_date" class="form-label">End date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" required>
+            </div>
+            <code id="result"></code>
+            <input type="submit" class="form-control text-primary">
+        </form>
+    </div>
+    <script src="https://unpkg.com/htmx.org@1.4.1"></script>
+    <script src="https://unpkg.com/htmx.org@1.4.1/dist/ext/json-enc.js"></script>
+    <script src="https://unpkg.com/mustache@4.2.0/mustache.js"></script>
+</body>
+</html>

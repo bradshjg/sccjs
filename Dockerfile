@@ -6,6 +6,6 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY sccjs.py .
+COPY chalicelib/sccjs.py .
 
 ENTRYPOINT [ "python", "sccjs.py" ]

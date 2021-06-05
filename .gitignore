@@ -1,5 +1,6 @@
 data.csv
 .vscode/
+.chalice/deployments/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

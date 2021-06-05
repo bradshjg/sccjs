@@ -1,0 +1,6 @@
+{
+  "version": "2.0",
+  "app_name": "sccjs",
+  "iam_role_arn": "arn:aws:iam::580021727456:role/sccjs-lambda",
+  "manage_iam_role": false
+}
