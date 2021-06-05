@@ -69,20 +69,6 @@ def submit():
                 {
                     "name": "sccjs",
                     "command": [username, password, start_date, end_date],
-                    "environment": [
-                        {
-                            "name": "SCCJS_DEBUG",
-                            "value": "1"
-                        },
-                        {
-                            "name": "SCCJS_SEND_EMAIL",
-                            "value": "1"
-                        },
-                        {
-                            "name": "SCCJS_EMAIL_TO",
-                            "value": "james.g.bradshaw@gmail.com"
-                        }
-                    ]
                 }
             ]
         }
