@@ -1,12 +1,19 @@
 import datetime
 
 import boto3
-from chalice import Chalice
+from chalice import Chalice, CORSConfig
 from chalicelib.sccjs import SCCJS
 
 app = Chalice(app_name='sccjs')
 
-@app.route('/', methods=['POST'], cors=True)
+cors_config = CORSConfig(
+    allow_origin='https://bradshjg.github.io',
+    allow_headers=['HX-Current-URL', 'HX-Request', 'HX-Target'],
+    max_age=600,
+    expose_headers=['HX-Current-URL', 'HX-Request', 'HX-Target'],
+)
+
+@app.route('/', methods=['POST'], cors=cors_config)
 def submit():
     request_json = app.current_request.json_body
 
