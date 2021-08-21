@@ -1,22 +1,12 @@
 import datetime
-import os
 
 import boto3
-from chalice import Chalice, Response
+from chalice import Chalice
 from chalicelib.sccjs import SCCJS
 
 app = Chalice(app_name='sccjs')
 
-@app.route('/')
-def index():
-    index_fname = os.path.join(os.path.dirname(__file__), 'chalicelib', 'index.html')
-    with open(index_fname) as fp:
-        index = fp.read()
-    return Response(body=index,
-                    status_code=200,
-                    headers={'Content-Type': 'text/html'})
-
-@app.route('/submit', methods=['POST'])
+@app.route('/', methods=['POST'], cors=True)
 def submit():
     request_json = app.current_request.json_body
 

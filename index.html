@@ -8,7 +8,7 @@
 <body>
     <div class="container" style="max-width: 400px;">
         <h1 class="text-center">Submit SCCJS Job</h1>
-        <form hx-post="submit" hx-target="#result" hx-ext="json-enc">
+        <form hx-post="https://pe78t1hdk0.execute-api.us-east-1.amazonaws.com/api/" hx-target="#result" hx-ext="json-enc">
             <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
                 <input type="email" class="form-control" id="username" placeholder="name@example.com" name="username" required>
