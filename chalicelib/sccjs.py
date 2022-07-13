@@ -146,7 +146,7 @@ class SCCJS:
         return filter(lambda hearing: hearing["HearingTypeId"]["Word"] in self.HEARING_TYPES, hearing_data)
 
     def _get_hearing(self, eid):
-        resp = requests.get(self.CASE_URL, params={'eid': eid})
+        resp = requests.get(self.CASE_URL, params={'eid': eid}, timeout=TimeoutHTTPAdapter.TIMEOUT)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.content, 'html.parser')
         address_header = soup.find('span', class_='text-muted', text='Address')
