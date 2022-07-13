@@ -49,9 +49,10 @@ class SCCJS:
     def __init__(self, username, password, verify=False) -> None:
         self.username = username
         self.password = password
-        self._session = None
+        self._logged_in_session = None
+        self._anonymous_session = None
         if verify:
-            self._get_session()
+            self._get_logged_in_session()
 
     def get_data(self, start_date, end_date):
         hearings = []
@@ -85,15 +86,25 @@ class SCCJS:
         return hearings
 
     def _get_session(self):
-        if self._session is not None:
-            return self._session
         session = requests.Session()
         retry_strategy = Retry(
             total=3,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "OPTIONS"]
+            allowed_methods=["HEAD", "GET", "POST", "OPTIONS"]
         )
         session.mount("https://", TimeoutHTTPAdapter(max_retries=retry_strategy))
+        return session
+
+    def _get_anonymous_session(self):
+        if self._anonymous_session is not None:
+            return self._anonymous_session
+        self._anonymous_session = self._get_session()
+        return self._anonymous_session
+
+    def _get_logged_in_session(self):
+        if self._logged_in_session is not None:
+            return self._logged_in_session
+        session = self._get_session()
         login_get_resp = session.get(self.LOGIN_GET_URL)
         login_get_resp.raise_for_status()
         login_get_parsed = BeautifulSoup(login_get_resp.content, 'html.parser')
@@ -114,11 +125,11 @@ class SCCJS:
         if action != self.LOGIN_POST_URL:
             raise self.LoginFailed
         session.post(action, data=sso_data).raise_for_status()
-        self._session = session
-        return session
+        self._logged_in_session = session
+        return self._logged_in_session
 
     def _get_hearings(self, judge_id, date):
-        session = self._get_session()
+        session = self._get_logged_in_session()
         formatted_date = date.strftime('%m/%d/%Y')
         session.post(self.SEARCH_URL,
                      data={
@@ -146,7 +157,8 @@ class SCCJS:
         return filter(lambda hearing: hearing["HearingTypeId"]["Word"] in self.HEARING_TYPES, hearing_data)
 
     def _get_hearing(self, eid):
-        resp = requests.get(self.CASE_URL, params={'eid': eid}, timeout=TimeoutHTTPAdapter.TIMEOUT)
+        session = self._get_anonymous_session()
+        resp = session.get(self.CASE_URL, params={'eid': eid})
         resp.raise_for_status()
         soup = BeautifulSoup(resp.content, 'html.parser')
         address_header = soup.find('span', class_='text-muted', text='Address')
