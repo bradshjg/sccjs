@@ -10,12 +10,27 @@ import sys
 import boto3
 from bs4 import BeautifulSoup
 import requests
+from requests.adapters import HTTPAdapter, Retry
+
+
+class TimeoutHTTPAdapter(HTTPAdapter):
+    TIMEOUT = 5  # seconds
+
+    def __init__(self, *args, **kwargs):
+        self.timeout = self.TIMEOUT
+        super().__init__(*args, **kwargs)
+
+    def send(self, request, **kwargs):
+        kwargs["timeout"] = self.timeout
+        return super().send(request, **kwargs)
+
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DEBUG = os.environ.get('SCCJS_DEBUG', False)
 SEND_EMAIL = os.environ.get('SCCJS_SEND_EMAIL', False)
+
 
 class SCCJS:
     DATE_FORMAT = '%Y-%m-%d'
@@ -72,7 +87,13 @@ class SCCJS:
     def _get_session(self):
         if self._session is not None:
             return self._session
-        session = requests.session()
+        session = requests.Session()
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "OPTIONS"]
+        )
+        session.mount("https://", TimeoutHTTPAdapter(max_retries=retry_strategy))
         login_get_resp = session.get(self.LOGIN_GET_URL)
         login_get_resp.raise_for_status()
         login_get_parsed = BeautifulSoup(login_get_resp.content, 'html.parser')
@@ -100,25 +121,25 @@ class SCCJS:
         session = self._get_session()
         formatted_date = date.strftime('%m/%d/%Y')
         session.post(self.SEARCH_URL,
-        data = {
-            "PortletName": "HearingSearch",
-            "Settings.CaptchaEnabled": "False",
-            "Settings.DefaultLocation": "All Locations",
-            "SearchCriteria.SelectedCourt": "All Locations",
-            "SearchCriteria.SelectedHearingType": "All Hearing Types",
-            "SearchCriteria.SearchByType": "JudicialOfficer",
-            "SearchCriteria.SelectedJudicialOfficer": judge_id,
-            "SearchCriteria.DateFrom": formatted_date,
-            "SearchCriteria.DateTo": formatted_date,
-        })
+                     data={
+                         "PortletName": "HearingSearch",
+                         "Settings.CaptchaEnabled": "False",
+                         "Settings.DefaultLocation": "All Locations",
+                         "SearchCriteria.SelectedCourt": "All Locations",
+                         "SearchCriteria.SelectedHearingType": "All Hearing Types",
+                         "SearchCriteria.SearchByType": "JudicialOfficer",
+                         "SearchCriteria.SelectedJudicialOfficer": judge_id,
+                         "SearchCriteria.DateFrom": formatted_date,
+                         "SearchCriteria.DateTo": formatted_date,
+                     })
 
         resp = session.post(self.SEARCH_READ_URL,
-        data = {
-            "sort": "",
-            "group": "",
-            "filter": "",
-            "portletId": "27",
-        })
+                            data={
+                                "sort": "",
+                                "group": "",
+                                "filter": "",
+                                "portletId": "27",
+                            })
 
         hearing_data = resp.json()['Data']
 
@@ -135,7 +156,8 @@ class SCCJS:
         else:
             address = ''
         if charge_descriptions:
-            charges = ', '.join(map(lambda el: f'{el.text} - {el.parent.next_sibling.next_sibling.text}', charge_descriptions))
+            charges = ', '.join(
+                map(lambda el: f'{el.text} - {el.parent.next_sibling.next_sibling.text}', charge_descriptions))
         else:
             charges = ''
         attorney = bool(soup.find('span', class_='text-muted', text='Lead Attorney'))
