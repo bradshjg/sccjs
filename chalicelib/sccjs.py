@@ -40,7 +40,16 @@ class SCCJS:
     SEARCH_URL = 'https://cjs.shelbycountytn.gov/CJS/Hearing/SearchHearings/HearingSearch'
     SEARCH_READ_URL = 'https://cjs.shelbycountytn.gov/CJS/Hearing/HearingResults/Read'
     CASE_URL = 'https://cjs.shelbycountytn.gov/CJS/Case/CaseDetail'
-    JUDGE_IDS = ["1028", "1025", "1023", "1022", "1030", "1031", "1075", "1032"]
+    JUDGE_IDS = [
+      "1022",   # Anderson, William Bill
+      "1030",   # Massey, Karen
+      "1031",   # Lucchesi, Ronald
+      "1032",   # Montesi, Louis J., Jr.
+      "26775",  # Wilson, Lee
+      "26776",  # Renfroe, Sheila B.
+      "26777",  # Gilbert, Greg
+      "26778",  # Johnson, Christian R.
+    ]
     HEARING_TYPES = ["AR", "AR2", "AT", "FA"]
 
     class LoginFailed(Exception):
