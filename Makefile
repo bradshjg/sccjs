@@ -45,4 +45,4 @@ lambda-local-request: export SCCJS_PASSWORD ?= $(shell bash -c 'read -p "Passwor
 
 .PHONY: lambda-local-request
 lambda-local-request: ## Make a request to the locally running lambda server
-	@curl -X POST -H 'Content-Type: application/json' -d "{\"username\": \"${SCCJS_USERNAME}\", \"password\": \"${SCCJS_PASSWORD}\", \"start_date\": \"2021-06-04\", \"end_date\": \"2021-06-04\"}" localhost:8000
+	@curl -X POST -H 'Content-Type: application/json' -d "{\"username\": \"${SCCJS_USERNAME}\", \"password\": \"${SCCJS_PASSWORD}\", \"search_type\": \"courtroom\", \"start_date\": \"2023-02-06\", \"end_date\": \"2023-02-07\"}" localhost:8000

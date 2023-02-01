@@ -22,6 +22,7 @@ def submit():
         password = request_json['password']
         start_date = request_json['start_date']
         end_date = request_json['end_date']
+        search_type = request_json['search_type']
     except KeyError:
         return {'sucess': False, 'message': 'invalid payload'}
 
@@ -65,7 +66,7 @@ def submit():
             "containerOverrides": [
                 {
                     "name": "sccjs",
-                    "command": [username, password, start_date, end_date],
+                    "command": [username, password, start_date, end_date, search_type],
                 }
             ]
         }
