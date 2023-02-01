@@ -50,33 +50,58 @@ class SCCJS:
       "26777",  # Gilbert, Greg
       "26778",  # Johnson, Christian R.
     ]
+    COURTROOM_IDS = [
+      "1083",  # 7
+      "1103",  # 7
+      "1085",  # 8
+      "1104",  # 8
+      "1087",  # 9
+      "1105",  # 9
+      "1088",  # 10
+      "1106",  # 10
+    ]
     HEARING_TYPES = ["AR", "AR2", "AT", "FA"]
+    ENTITIES = {
+      "judge": {
+        "search_type": "JudicialOfficer",
+        "search_key": "SearchCriteria.SelectedJudicialOfficer",
+        "entities": JUDGE_IDS,
+      },
+      "courtroom": {
+        "search_type": "Courtroom",
+        "search_key": "SearchCriteria.SelectedCourtroom",
+        "entities": COURTROOM_IDS,
+      }
+    }
 
     class LoginFailed(Exception):
         pass
 
-    def __init__(self, username, password, verify=False) -> None:
+    def __init__(self, username, password, verify=False, entity="judge") -> None:
         self.username = username
         self.password = password
         self._logged_in_session = None
         self._anonymous_session = None
+        self._entity = entity
+        self._entity_map = self.ENTITIES[entity]
+        self._search_type = self._entity_map["search_type"]
+        self._search_key = self._entity_map["search_key"]
+        if DEBUG:
+          self._entities = self._entity_map["entities"][0:2]
+        else:
+          self._entities = self._entity_map["entities"]
         if verify:
             self._get_logged_in_session()
 
     def get_data(self, start_date, end_date):
         hearings = []
 
-        if DEBUG:
-            judge_ids = self.JUDGE_IDS[0:2]
-        else:
-            judge_ids = self.JUDGE_IDS
-
         dates = (start_date + datetime.timedelta(days=i) for i in range((end_date - start_date).days + 1))
 
         for date in dates:
-            for judge_id in judge_ids:
-                logger.info(f'getting hearings for judge with id {judge_id} on {date.strftime(self.DATE_FORMAT)}')
-                for hearing in self._get_hearings(judge_id, date):
+            for entity_id in self._entities:
+                logger.info(f'getting hearings for {self._entity} with id {entity_id} on {date.strftime(self.DATE_FORMAT)}')
+                for hearing in self._get_hearings(entity_id, date):
                     encrypted_case_id = hearing['EncryptedCaseId']
                     extended_hearing_data = self._get_hearing(encrypted_case_id)
                     hearing_data = {
@@ -138,7 +163,7 @@ class SCCJS:
         self._logged_in_session = session
         return self._logged_in_session
 
-    def _get_hearings(self, judge_id, date):
+    def _get_hearings(self, entity_id, date):
         session = self._get_logged_in_session()
         formatted_date = date.strftime('%m/%d/%Y')
         session.post(self.SEARCH_URL,
@@ -148,8 +173,8 @@ class SCCJS:
                          "Settings.DefaultLocation": "All Locations",
                          "SearchCriteria.SelectedCourt": "All Locations",
                          "SearchCriteria.SelectedHearingType": "All Hearing Types",
-                         "SearchCriteria.SearchByType": "JudicialOfficer",
-                         "SearchCriteria.SelectedJudicialOfficer": judge_id,
+                         "SearchCriteria.SearchByType": self._search_type,
+                         self._search_key: entity_id,
                          "SearchCriteria.DateFrom": formatted_date,
                          "SearchCriteria.DateTo": formatted_date,
                      })
@@ -221,12 +246,17 @@ if __name__ == '__main__':
     password = sys.argv[2]
     start_date_raw = sys.argv[3]
     end_date_raw = sys.argv[4]
+    try:
+      entity_type = sys.argv[5]
+    except IndexError:
+      entity_type = "judge"
+
     email_to = os.environ.get('SCCJS_EMAIL_TO', username)
 
     start_date = datetime.datetime.strptime(start_date_raw, SCCJS.DATE_FORMAT)
     end_date = datetime.datetime.strptime(end_date_raw, SCCJS.DATE_FORMAT)
 
-    data = SCCJS(username, password).get_data(start_date, end_date)
+    data = SCCJS(username, password, entity=entity_type).get_data(start_date, end_date)
 
     if not data:
         logger.warning('no hearings found')

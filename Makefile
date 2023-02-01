@@ -25,7 +25,7 @@ test-ecs-local: export SCCJS_PASSWORD ?= $(shell bash -c 'read -p "Password: " p
 
 .PHONY: test-ecs-local
 test-ecs-local: ## Test ECS image locally
-	@docker run -it --rm --env-file .env sccjs "$$SCCJS_USERNAME" "$$SCCJS_PASSWORD" 2022-10-10 2022-10-14
+	@docker run -it --rm --env-file .env sccjs "$$SCCJS_USERNAME" "$$SCCJS_PASSWORD" 2023-02-06 2023-02-07 courtroom
 
 test-ecs-live: export SCCJS_USERNAME ?= $(shell bash -c 'read -p "Username: " username; echo $$username')
 test-ecs-live: export SCCJS_PASSWORD ?= $(shell bash -c 'read -p "Password: " password; echo $$password')
