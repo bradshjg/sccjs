@@ -1,7 +1,7 @@
 # SCCJS App
 
 .PHONY: help
-help: ## Show this help.
+help: ## Show this help
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
 .PHONY: test
@@ -17,7 +17,7 @@ login-ecr: ## Log into ECR registry
 	@aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/h1l0a3x3
 
 .PHONY: build-ecs
-build-ecs: ## Building ECS image
+build-ecs: ## Build ECS image
 	@docker build -t sccjs .
 
 .PHONY: push-ecs
