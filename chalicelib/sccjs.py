@@ -5,20 +5,35 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import logging
 import os
+import ssl
 import sys
 
 import boto3
 from bs4 import BeautifulSoup
 import requests
 from requests.adapters import HTTPAdapter, Retry
+import urllib3
 
 
 class TimeoutHTTPAdapter(HTTPAdapter):
     TIMEOUT = 5  # seconds
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, ssl_context,  **kwargs):
+        self.ssl_context = ssl_context
         self.timeout = self.TIMEOUT
         super().__init__(*args, **kwargs)
+
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self._pool_connections = connections
+        self._pool_maxsize = maxsize
+        self._pool_block = block
+
+        self.poolmanager = urllib3.poolmanager.PoolManager(
+            num_pools=connections,
+            maxsize=maxsize,
+            block=block,
+            ssl_context=self.ssl_context
+        )
 
     def send(self, request, **kwargs):
         kwargs["timeout"] = self.timeout
@@ -128,7 +143,9 @@ class SCCJS:
             status_forcelist=[429, 500, 502, 503, 504],
             allowed_methods=["HEAD", "GET", "POST", "OPTIONS"]
         )
-        session.mount("https://", TimeoutHTTPAdapter(max_retries=retry_strategy))
+        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        ctx.options |= 0x4
+        session.mount("https://", TimeoutHTTPAdapter(max_retries=retry_strategy, ssl_context=ctx))
         return session
 
     def _get_anonymous_session(self):
@@ -201,7 +218,7 @@ class SCCJS:
             logger.warning(e)
             return {}
         soup = BeautifulSoup(resp.content, 'html.parser')
-        address_header = soup.find('span', class_='text-muted', text='Address')
+        address_header = soup.find('span', class_='text-muted', string='Address')
         charge_descriptions = soup.find_all(class_='chargeOffenseDescription')
         if address_header:
             address = ' '.join(address_header.next_sibling.next_sibling.text.split())
@@ -212,7 +229,7 @@ class SCCJS:
                 map(lambda el: f'{el.text} - {el.parent.next_sibling.next_sibling.text}', charge_descriptions))
         else:
             charges = ''
-        attorney = bool(soup.find('span', class_='text-muted', text='Lead Attorney'))
+        attorney = bool(soup.find('span', class_='text-muted', string='Lead Attorney'))
         return {'address': address, 'attorney': attorney, 'charges': charges}
 
 
