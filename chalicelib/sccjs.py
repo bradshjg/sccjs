@@ -73,6 +73,7 @@ class SCCJS:
         "entities": COURTROOM_IDS,
       }
     }
+    MISSING_DATA_MESSAGE = 'UNKNOWN'
 
     class LoginFailed(Exception):
         pass
@@ -109,11 +110,11 @@ class SCCJS:
                         'hearing_type': hearing['HearingTypeId']['Description'],
                         'judge_name': hearing['JudgeParsed'],
                         'defendant_case_type': hearing['CaseTypeId']['Description'],
-                        'charges': extended_hearing_data['charges'],
+                        'charges': extended_hearing_data.get('charges', self.MISSING_DATA_MESSAGE),
                         'case_number': hearing['CaseNumber'],
                         'defendant_name': hearing['DefendantName'],
-                        'defendant_address': extended_hearing_data['address'],
-                        'defendant_has_attorney': extended_hearing_data['attorney'],
+                        'defendant_address': extended_hearing_data.get('address', self.MISSING_DATA_MESSAGE),
+                        'defendant_has_attorney': extended_hearing_data.get('attorney', self.MISSING_DATA_MESSAGE),
                         'hearing_details': f'https://cjs.shelbycountytn.gov/CJS/Case/CaseDetail?eid={encrypted_case_id}'
                     }
                     hearings.append(hearing_data)
@@ -194,7 +195,11 @@ class SCCJS:
     def _get_hearing(self, eid):
         session = self._get_anonymous_session()
         resp = session.get(self.CASE_URL, params={'eid': eid})
-        resp.raise_for_status()
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError as e:
+            logger.warning(e)
+            return {}
         soup = BeautifulSoup(resp.content, 'html.parser')
         address_header = soup.find('span', class_='text-muted', text='Address')
         charge_descriptions = soup.find_all(class_='chargeOffenseDescription')
