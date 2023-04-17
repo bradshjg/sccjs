@@ -4,6 +4,14 @@
 help: ## Show this help.
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
+.PHONY: test
+test: ## Run tests
+	@python -m pytest
+
+.PHONY: test-record
+test-record: ## Record cassette for testing
+	@python -m pytest --record-mode=once
+
 .PHONY: login-ecr
 login-ecr: ## Log into ECR registry
 	@aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/h1l0a3x3
