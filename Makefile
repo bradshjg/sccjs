@@ -28,12 +28,9 @@ push-ecs: ## Push ECS image to ECR
 .PHONY: release-ecs
 release-ecs: login-ecr build-ecs push-ecs ## Build and push new ECS image to ECR
 
-test-ecs-local: export SCCJS_USERNAME ?= $(shell bash -c 'read -p "Username: " username; echo $$username')
-test-ecs-local: export SCCJS_PASSWORD ?= $(shell bash -c 'read -p "Password: " password; echo $$password')
-
 .PHONY: test-ecs-local
 test-ecs-local: ## Test ECS image locally
-	@docker run -it --rm --env-file .env sccjs "$$SCCJS_USERNAME" "$$SCCJS_PASSWORD" 2023-02-06 2023-02-07 courtroom
+	@source .env && docker run -it --rm --env-file .env sccjs "$$SCCJS_USERNAME" "$$SCCJS_PASSWORD" 2023-02-06 2023-02-07 courtroom
 
 test-ecs-live: export SCCJS_USERNAME ?= $(shell bash -c 'read -p "Username: " username; echo $$username')
 test-ecs-live: export SCCJS_PASSWORD ?= $(shell bash -c 'read -p "Password: " password; echo $$password')
@@ -48,9 +45,6 @@ test-ecs-live: ## Test ECS image in AWS
 lambda-local: ## Run lambda function locally
 	@chalice local
 
-lambda-local-request: export SCCJS_USERNAME ?= $(shell bash -c 'read -p "Username: " username; echo $$username')
-lambda-local-request: export SCCJS_PASSWORD ?= $(shell bash -c 'read -p "Password: " password; echo $$password')
-
 .PHONY: lambda-local-request
 lambda-local-request: ## Make a request to the locally running lambda server
-	@curl -X POST -H 'Content-Type: application/json' -d "{\"username\": \"${SCCJS_USERNAME}\", \"password\": \"${SCCJS_PASSWORD}\", \"search_type\": \"courtroom\", \"start_date\": \"2023-02-06\", \"end_date\": \"2023-02-07\"}" localhost:8000
+	source .env && curl -H 'Content-Type: application/json' -d "{\"username\": \"$$SCCJS_USERNAME\", \"password\": \"$$SCCJS_PASSWORD\", \"search_type\": \"courtroom\", \"start_date\": \"2023-02-06\", \"end_date\": \"2023-02-07\"}" localhost:8000
